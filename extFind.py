@@ -7,9 +7,12 @@ def main(args):
             print i
     else:
         df = dict2pd(countExt(args.extension,args.inputDir))
-        if raw_input('Make output as a excel spreadsheet [y/n] ? : ') == 'y':
-            print df
+        if args.output == 'xls':
             df.to_excel('tmp_001.xls')
+        elif args.output == 'txt':
+            df.to_csv('tmp_001.txt',sep='\t')
+        elif args.output == 'csv':
+            df.to_csv('tmp_001.csv')
         else:
             print df
         
@@ -33,6 +36,10 @@ if __name__ == '__main__':
         '-c', '--count',
         help='count files with the ext in each directory',
         action='store_true')
+    parser.add_argument(
+        '-o', '--output',
+        default='print',
+        help='Output types, [xls,csv,txt]. If not specified, just prints')
     parser.add_argument(
         '-e', '--extension',
         help='Extension to search')
