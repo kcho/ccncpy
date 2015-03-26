@@ -8,7 +8,8 @@ def main(args):
     else:
         df = dict2pd(countExt(args.extension,args.inputDir))
         if raw_input('Make output as a excel spreadsheet [y/n] ? : ') == 'y':
-            df.to_excel('tmp_001.xlsx')
+            print df
+            df.to_excel('tmp_001.xls')
         else:
             print df
         
