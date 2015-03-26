@@ -6,7 +6,12 @@ def main(args):
         for i in extSearch(args.extension,args.inputDir):
             print i
     else:
-        print dict2pd(countExt(args.extension,args.inputDir))
+        df = dict2pd(countExt(args.extension,args.inputDir))
+        if raw_input('Make output as a excel spreadsheet [y/n] ? : ') == 'y':
+            df.to_excel('tmp_001.xlsx')
+        else:
+            print df
+        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

@@ -6,6 +6,10 @@ import argparse
 import textwrap
 import pandas as pd
 
+pd.set_option('display.max_rows', 50000)
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.width', 1000)
+pd.set_option('display.height', 1000)
 
 def extSearch(ext,location=os.getcwd()):
     out = []
@@ -23,8 +27,9 @@ def countExt(ext,location=os.getcwd()):
     rootU = set(rootC)
     countD = {}
     for root in rootU:
+        shorter_root = root.split(location)[1]
         count = len([x for x in extLocList if root in x])
-        countD[root] = count
+        countD[shorter_root] = count
     return countD
     
 def dict2pd(D):
