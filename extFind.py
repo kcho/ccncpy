@@ -7,12 +7,12 @@ def main(args):
             print i
     else:
         df = dict2pd(countExt(args.extension,args.inputDir))
-        if args.output == 'xls':
-            df.to_excel('tmp_001.xls')
-        elif args.output == 'txt':
-            df.to_csv('tmp_001.txt',sep='\t')
-        elif args.output == 'csv':
-            df.to_csv('tmp_001.csv')
+        if args.output.endswith('xls'):
+            df.to_excel(args.output)
+        elif args.output.endswith('txt'):
+            df.to_csv(args.output,sep='\t')
+        elif args.output.endswith('csv'):
+            df.to_csv(args.output)
         else:
             print df
         
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-o', '--output',
         default='print',
-        help='Output types, [xls,csv,txt]. If not specified, just prints')
+        help='Eg. output.xlsx. Output types, [xls,csv,txt]. If not specified, just prints')
     parser.add_argument(
         '-e', '--extension',
         help='Extension to search')
