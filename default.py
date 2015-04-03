@@ -5,6 +5,9 @@ import re
 import argparse
 import textwrap
 
+def main(args):
+    print args
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
