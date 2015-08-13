@@ -3,13 +3,14 @@
 import os
 import re
 import argparse
+import sys
 import textwrap
 import pandas as pd
 
 pd.set_option('display.max_rows', 50000)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
-pd.set_option('display.height', 1000)
+#pd.set_option('display.height', 1000)
 
 def extSearch(ext,location=os.getcwd()):
     out = []
@@ -20,6 +21,27 @@ def extSearch(ext,location=os.getcwd()):
             if re.search(ext,extension,re.IGNORECASE):
                 out.append(os.path.join(root,sFile))
     return out
+
+def subDirSearch(subDir,location=os.getcwd()):
+    out = []
+    for root,dirs,files in os.walk(location):
+        for dir in dirs:
+            inList = [x for x in subDir if x in os.listdir(os.path.join(root,dir))]
+            
+            if len(inList) == len(subDir):
+                out.append(os.path.join(root,dir))
+
+    if len(out) == 1:
+        return out
+    elif len(out) == 0:
+        print 'There are no matching directory'
+        return 'none'
+        
+    else:
+        print 'There are more than 2 directories matching description'
+        print out
+        return out
+
 
 def countExt(ext,location=os.getcwd()):
     extLocList = extSearch(ext,location)
