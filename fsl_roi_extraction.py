@@ -21,7 +21,7 @@ def get_roi_num_name(templateXml, templageImg):
     names_roi = [re.sub('__','_',x) for x in names_roi]
     names_roi = [re.sub('_$','',x) for x in names_roi]
     
-    for num,name in zip(num_name, names_roi):
+    for num,name in zip(nums_roi, names_roi):
         print int(num)+1,name
         print 'fslmaths {inputImg} -thr {thr} -uthr {thr} {outputImg}'.format(
                     inputImg = templageImg,
