@@ -34,7 +34,7 @@ def subDirSearch(targetDirs,location=os.getcwd()):
 
     elif len(out) == 0:
         print 'There are no matching directory'
-        return 'none'
+        return None
         
     else:
         print 'There are more than 2 directories matching description'
