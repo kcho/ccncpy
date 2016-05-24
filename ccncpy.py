@@ -22,17 +22,16 @@ def extSearch(ext,location=os.getcwd()):
                 out.append(os.path.join(root,sFile))
     return out
 
-def subDirSearch(subDir,location=os.getcwd()):
+def subDirSearch(targetDirs,location=os.getcwd()):
     out = []
     for root,dirs,files in os.walk(location):
-        for dir in dirs:
-            inList = [x for x in subDir if x in os.listdir(os.path.join(root,dir))]
-            
-            if len(inList) == len(subDir):
-                out.append(os.path.join(root,dir))
+        inList = [x for x in dirs if x in targetDirs]
+        if len(inList) == len(targetDirs):
+            out.append(root)
 
     if len(out) == 1:
         return out
+
     elif len(out) == 0:
         print 'There are no matching directory'
         return 'none'
