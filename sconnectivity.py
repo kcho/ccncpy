@@ -32,6 +32,7 @@ def get_map(f):
     return nb.load(f).get_data()
 
 class get_subject_info:
+
     def __init__(self, param):
 #         try:
         dataLoc, subject = param
@@ -92,23 +93,24 @@ class get_subject_info:
             thr = get_thr(biggest_basename)
             space = get_space(biggest_basename)
             side = get_side(biggest_basename)
-            cortex = get_cortex(biggest_basename)
             biggest_map = get_map(biggest_file)
             mk_map = get_matching_mk_map(space)
+            #mk_map = mk_map_fs
 
-            biggest_volume = count_nonzero(biggest_map)
-            biggest_mk = mean(mk_map[(mk_map != 0) & (biggest_map > 0)])
+            for cortex, number in nuclei_dict.iteritems():
+                biggest_volume = count_nonzero(biggest_map[biggest_map==number])
+                biggest_mk = mean(mk_map[(mk_map != 0) & (biggest_map == 0)])
 
-            df = pd.DataFrame({'subject':[subject],
-                               'space':space,
-                               'cortex':cortex,
-                               'threshold':thr,
-                               'side':side,
-                               'biggest_volume':biggest_volume,
-                               'biggest_mk':biggest_mk})
+                df = pd.DataFrame({'subject':[subject],
+                                   'space':space,
+                                   'cortex':cortex,
+                                   'threshold':thr,
+                                   'side':side,
+                                   'biggest_volume':biggest_volume,
+                                   'biggest_mk':biggest_mk})
 
-            biggest_df = pd.concat([biggest_df, df])
-            
+                biggest_df = pd.concat([biggest_df, df])
+                
 
         seed_df = pd.DataFrame()
         for seed_file in seed_files:
