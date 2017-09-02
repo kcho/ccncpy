@@ -60,7 +60,7 @@ class get_subject_info:
 
         roi_files = [x for x in img_files if 'ROI' in x and re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE)]
         seed_files = [x for x in img_files if re.search('segmentation_fnirt.+seeds_to', x)]
-        #biggest_files = [x for x in img_files if re.search('biggest', x)]
+        biggest_files = [x for x in img_files if re.search('biggest', x)]
 
         roi_df = pd.DataFrame()
         for roi_file in roi_files:
@@ -84,6 +84,31 @@ class get_subject_info:
                                'cortex_volume':roi_volume,
                                'cortex_mk':roi_mk})
             roi_df = pd.concat([roi_df, df])
+
+        biggest_df = pd.DataFrame()
+        for biggest_file in biggest_files:
+            biggest_basename = basename(biggest_file)
+
+            thr = get_thr(biggest_basename)
+            space = get_space(biggest_basename)
+            side = get_side(biggest_basename)
+            cortex = get_cortex(biggest_basename)
+            biggest_map = get_map(biggest_file)
+            mk_map = get_matching_mk_map(space)
+
+            biggest_volume = count_nonzero(biggest_map)
+            biggest_mk = mean(mk_map[(mk_map != 0) & (biggest_map > 0)])
+
+            df = pd.DataFrame({'subject':[subject],
+                               'space':space,
+                               'cortex':cortex,
+                               'threshold':thr,
+                               'side':side,
+                               'biggest_volume':biggest_volume,
+                               'biggest_mk':biggest_mk})
+
+            biggest_df = pd.concat([biggest_df, df])
+            
 
         seed_df = pd.DataFrame()
         for seed_file in seed_files:
@@ -126,10 +151,16 @@ class get_subject_info:
                              on=['subject', 'cortex', 'side', 'space'],
                              how='outer')
 
+        subjectDf = pd.merged(subjectDf, biggest_df,
+                             on=['subject', 'cortex', 'side', 'space'],
+                             how='outer')
+
+
         subjectDf = subjectDf.sort_values(by=['subject','cortex', 'side', 'space'])
 
         self.roi_df = roi_df
         self.seed_df = seed_df
+        self.biggest_df = biggest_df
         self.subjectDf = subjectDf
 
 if __name__=='__main__':
