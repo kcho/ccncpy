@@ -92,7 +92,7 @@ class get_subject_info:
 
             thr = get_thr(biggest_basename)
             space = get_space(biggest_basename)
-            side = get_side(biggest_basename)
+            side = get_side(biggest_file)
             biggest_map = get_map(biggest_file)
             mk_map = get_matching_mk_map(space)
             #mk_map = mk_map_fs
@@ -145,18 +145,19 @@ class get_subject_info:
 
 
         self.seed_df_orig = seed_df
+
+        seed_df = pd.merge(seed_df, biggest_df,
+                             on=['subject', 'threshold', 'cortex', 'side', 'space'],
+                             how='left')
+
         seed_df = seed_df.pivot_table(index=['subject', 'space','side','cortex'], 
                                       columns='threshold', 
-                                      values=['seed_mk', 'seed_volume', 'connectivity'], 
+                                      values=['seed_mk', 'seed_volume', 'connectivity', 'biggest_volume', 'biggest_mk'], 
                                       aggfunc=np.sum).reset_index()
+
         subjectDf = pd.merge(roi_df, seed_df,
                              on=['subject', 'cortex', 'side', 'space'],
                              how='outer')
-
-        subjectDf = pd.merged(subjectDf, biggest_df,
-                             on=['subject', 'cortex', 'side', 'space'],
-                             how='outer')
-
 
         subjectDf = subjectDf.sort_values(by=['subject','cortex', 'side', 'space'])
 
