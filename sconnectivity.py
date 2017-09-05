@@ -38,164 +38,168 @@ class get_subject_info:
 #         try:
         dataLoc, subject = param
 
-        #pickle_loc = join(dataLoc, subject, 'data')
+        pickle_loc = join(dataLoc, subject, 'data.pkl')
 
-        #if 
+        if isfile(pickle_loc):
+            with open(pickle_loc, 'rb') as f:
+                subjectDf = pickle.load(f)
+                self.subjectDf = subjectDf
+        else:
+            nuclei_dict = {"LPFC":1, "LTC":2, "MPFC":3, "MTC":4,
+                           "OCC":5, "OFC":6, "PC":7, "SMC":8}
 
-        
-        nuclei_dict = {"LPFC":1, "LTC":2, "MPFC":3, "MTC":4,
-                       "OCC":5, "OFC":6, "PC":7, "SMC":8}
 
+            subjDir = join(dataLoc, subject)
+            dkiDir = join(dataLoc, subject, 'DKI')
+            mk_map_fs = get_map(join(dkiDir, 'kmean_freesurfer_space.nii.gz'))
+            mk_map_dki = get_map(join(dkiDir, 'kmean.nii'))
 
-        subjDir = join(dataLoc, subject)
-        dkiDir = join(dataLoc, subject, 'DKI')
-        mk_map_fs = get_map(join(dkiDir, 'kmean_freesurfer_space.nii.gz'))
-        mk_map_dki = get_map(join(dkiDir, 'kmean.nii'))
+            # file information
+            get_thr = lambda x: int(re.search('\d{1,2}', x).group(0)) if re.search('\d{1,2}', x) else 0
+            get_space = lambda x: 'dki' if re.search('dki', x) else 'fs'
+            get_side = lambda x: 'left' if re.search('lh|left', x) else 'right'
+            get_matching_mk_map = lambda x: mk_map_dki if x=='dki' else mk_map_fs
+            get_cortex = lambda x: re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE).group(0)
 
-        # file information
-        get_thr = lambda x: int(re.search('\d{1,2}', x).group(0)) if re.search('\d{1,2}', x) else 0
-        get_space = lambda x: 'dki' if re.search('dki', x) else 'fs'
-        get_side = lambda x: 'left' if re.search('lh|left', x) else 'right'
-        get_matching_mk_map = lambda x: mk_map_dki if x=='dki' else mk_map_fs
-        get_cortex = lambda x: re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE).group(0)
+            img_files = []
+            for root, dirs, files in os.walk(subjDir):
+                for f in files:
+                    if f.endswith('nii.gz'):
+                        img_files.append(join(root, f))
 
-        img_files = []
-        for root, dirs, files in os.walk(subjDir):
-            for f in files:
-                if f.endswith('nii.gz'):
-                    img_files.append(join(root, f))
+            roi_files = [x for x in img_files if 'ROI' in x and re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE)]
+            thalamus_roi_files = [x for x in img_files if 'ROI' in x and re.search('thalamus.nii.gz', x, re.IGNORECASE)]
+            seed_files = [x for x in img_files if re.search('segmentation_fnirt.+seeds_to', x)]
+            biggest_files = [x for x in img_files if re.search('biggest', x)]
 
-        roi_files = [x for x in img_files if 'ROI' in x and re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE)]
-        thalamus_roi_files = [x for x in img_files if 'ROI' in x and re.search('thalamus.nii.gz', x, re.IGNORECASE)]
-        seed_files = [x for x in img_files if re.search('segmentation_fnirt.+seeds_to', x)]
-        biggest_files = [x for x in img_files if re.search('biggest', x)]
+            thalamus_roi_df = pd.DataFrame()
+            for roi_file in thalamus_roi_files:
+                roi_basename = basename(roi_file)
 
-        thalamus_roi_df = pd.DataFrame()
-        for roi_file in thalamus_roi_files:
-            roi_basename = basename(roi_file)
+                space = get_space(roi_basename)
+                side = get_side(roi_basename)
 
-            space = get_space(roi_basename)
-            side = get_side(roi_basename)
+                roi_map = get_map(roi_file)
+                mk_map = get_matching_mk_map(space)
 
-            roi_map = get_map(roi_file)
-            mk_map = get_matching_mk_map(space)
+                roi_volume = count_nonzero(roi_map)
+                roi_mk = mean(mk_map[(mk_map!=0) & (roi_map>0)])
 
-            roi_volume = count_nonzero(roi_map)
-            roi_mk = mean(mk_map[(mk_map!=0) & (roi_map>0)])
+                df = pd.DataFrame({'subject':[subject],
+                                   'space':space,
+                                   'side':side,
+                                   'thalamus_volume':roi_volume,
+                                   'thalamus_mk':roi_mk})
+                thalamus_roi_df = pd.concat([thalamus_roi_df, df])
 
-            df = pd.DataFrame({'subject':[subject],
-                               'space':space,
-                               'side':side,
-                               'thalamus_volume':roi_volume,
-                               'thalamus_mk':roi_mk})
-            thalamus_roi_df = pd.concat([thalamus_roi_df, df])
+            roi_df = pd.DataFrame()
+            for roi_file in roi_files:
+                roi_basename = basename(roi_file)
 
-        roi_df = pd.DataFrame()
-        for roi_file in roi_files:
-            roi_basename = basename(roi_file)
+                thr = get_thr(roi_basename)
+                space = get_space(roi_basename)
+                side = get_side(roi_basename)
+                cortex = get_cortex(roi_basename)
+                roi_map = get_map(roi_file)
+                mk_map = get_matching_mk_map(space)
 
-            thr = get_thr(roi_basename)
-            space = get_space(roi_basename)
-            side = get_side(roi_basename)
-            cortex = get_cortex(roi_basename)
-            roi_map = get_map(roi_file)
-            mk_map = get_matching_mk_map(space)
+                roi_volume = count_nonzero(roi_map)
+                roi_mk = mean(mk_map[(mk_map!=0) & (roi_map>0)])
 
-            roi_volume = count_nonzero(roi_map)
-            roi_mk = mean(mk_map[(mk_map!=0) & (roi_map>0)])
+                df = pd.DataFrame({'subject':[subject],
+                                   'space':space,
+                                   'cortex':cortex,
+                                   #'threshold':thr,
+                                   'side':side,
+                                   'cortex_volume':roi_volume,
+                                   'cortex_mk':roi_mk})
+                roi_df = pd.concat([roi_df, df])
 
-            df = pd.DataFrame({'subject':[subject],
-                               'space':space,
-                               'cortex':cortex,
-                               #'threshold':thr,
-                               'side':side,
-                               'cortex_volume':roi_volume,
-                               'cortex_mk':roi_mk})
-            roi_df = pd.concat([roi_df, df])
+            biggest_df = pd.DataFrame()
+            for biggest_file in biggest_files:
+                biggest_basename = basename(biggest_file)
 
-        biggest_df = pd.DataFrame()
-        for biggest_file in biggest_files:
-            biggest_basename = basename(biggest_file)
+                thr = get_thr(biggest_basename)
+                space = get_space(biggest_basename)
+                side = get_side(biggest_file)
+                biggest_map = get_map(biggest_file)
+                mk_map = get_matching_mk_map(space)
+                #mk_map = mk_map_fs
 
-            thr = get_thr(biggest_basename)
-            space = get_space(biggest_basename)
-            side = get_side(biggest_file)
-            biggest_map = get_map(biggest_file)
-            mk_map = get_matching_mk_map(space)
-            #mk_map = mk_map_fs
+                for cortex, number in nuclei_dict.iteritems():
+                    biggest_volume = count_nonzero(biggest_map[biggest_map==number])
+                    biggest_mk = mean(mk_map[(mk_map != 0) & (biggest_map == 0)])
 
-            for cortex, number in nuclei_dict.iteritems():
-                biggest_volume = count_nonzero(biggest_map[biggest_map==number])
-                biggest_mk = mean(mk_map[(mk_map != 0) & (biggest_map == 0)])
+                    df = pd.DataFrame({'subject':[subject],
+                                       'space':space,
+                                       'cortex':cortex,
+                                       'threshold':thr,
+                                       'side':side,
+                                       'biggest_volume':biggest_volume,
+                                       'biggest_mk':biggest_mk})
+
+                    biggest_df = pd.concat([biggest_df, df])
+                    
+
+            seed_df = pd.DataFrame()
+            for seed_file in seed_files:
+                seed_basename = basename(seed_file)
+
+                thr = get_thr(seed_basename)
+                space = get_space(seed_basename)
+                side = get_side(seed_basename)
+                cortex = get_cortex(seed_basename)
+                seed_map = get_map(seed_file)
+                mk_map = get_matching_mk_map(space)
+
+                seed_volume = count_nonzero(seed_map)
+                seed_mk = mean(mk_map[(mk_map!=0) & (seed_map>0)])
+                connectivity = sum(seed_map[seed_map!=0])
 
                 df = pd.DataFrame({'subject':[subject],
                                    'space':space,
                                    'cortex':cortex,
                                    'threshold':thr,
                                    'side':side,
-                                   'biggest_volume':biggest_volume,
-                                   'biggest_mk':biggest_mk})
+                                   'seed_volume':seed_volume,
+                                   'connectivity':connectivity,
+                                   'seed_mk':seed_mk})
 
-                biggest_df = pd.concat([biggest_df, df])
-                
+                #df = df.pivot_table(index=['subject','seed_name','space', 'cortex', 'side'],
+                                    #columns=['seed_volume', 'connectivity', 'seed_mk'],
+                                    #values='threshold',
+                                    #aggfunc=np.sum)
 
-        seed_df = pd.DataFrame()
-        for seed_file in seed_files:
-            seed_basename = basename(seed_file)
+                seed_df = pd.concat([seed_df, df])
 
-            thr = get_thr(seed_basename)
-            space = get_space(seed_basename)
-            side = get_side(seed_basename)
-            cortex = get_cortex(seed_basename)
-            seed_map = get_map(seed_file)
-            mk_map = get_matching_mk_map(space)
+            self.seed_df_orig = seed_df
 
-            seed_volume = count_nonzero(seed_map)
-            seed_mk = mean(mk_map[(mk_map!=0) & (seed_map>0)])
-            connectivity = sum(seed_map[seed_map!=0])
+            seed_df = pd.merge(seed_df, biggest_df,
+                                 on=['subject', 'threshold', 'cortex', 'side', 'space'],
+                                 how='left')
 
-            df = pd.DataFrame({'subject':[subject],
-                               'space':space,
-                               'cortex':cortex,
-                               'threshold':thr,
-                               'side':side,
-                               'seed_volume':seed_volume,
-                               'connectivity':connectivity,
-                               'seed_mk':seed_mk})
+            seed_df = seed_df.pivot_table(index=['subject', 'space','side','cortex'], 
+                                          columns='threshold', 
+                                          values=['seed_mk', 'seed_volume', 'connectivity', 'biggest_volume', 'biggest_mk'], 
+                                          aggfunc=np.sum).reset_index()
 
-            #df = df.pivot_table(index=['subject','seed_name','space', 'cortex', 'side'],
-                                #columns=['seed_volume', 'connectivity', 'seed_mk'],
-                                #values='threshold',
-                                #aggfunc=np.sum)
+            subjectDf = pd.merge(roi_df, seed_df,
+                                 on=['subject', 'cortex', 'side', 'space'],
+                                 how='outer')
 
-            seed_df = pd.concat([seed_df, df])
+            subjectDf = pd.merge(thalamus_roi_df, subjectDf,
+                                 on=['subject', 'side', 'space'],
+                                 how='right')
 
+            subjectDf = subjectDf.sort_values(by=['subject', 'cortex', 'side', 'space'])
 
-        self.seed_df_orig = seed_df
+            self.roi_df = roi_df
+            self.seed_df = seed_df
+            self.biggest_df = biggest_df
+            self.subjectDf = subjectDf
 
-        seed_df = pd.merge(seed_df, biggest_df,
-                             on=['subject', 'threshold', 'cortex', 'side', 'space'],
-                             how='left')
-
-        seed_df = seed_df.pivot_table(index=['subject', 'space','side','cortex'], 
-                                      columns='threshold', 
-                                      values=['seed_mk', 'seed_volume', 'connectivity', 'biggest_volume', 'biggest_mk'], 
-                                      aggfunc=np.sum).reset_index()
-
-        subjectDf = pd.merge(roi_df, seed_df,
-                             on=['subject', 'cortex', 'side', 'space'],
-                             how='outer')
-
-        subjectDf = pd.merge(thalamus_roi_df, subjectDf,
-                             on=['subject', 'side', 'space'],
-                             how='right')
-
-        subjectDf = subjectDf.sort_values(by=['subject', 'cortex', 'side', 'space'])
-
-        self.roi_df = roi_df
-        self.seed_df = seed_df
-        self.biggest_df = biggest_df
-        self.subjectDf = subjectDf
+            with open(pickle_loc, 'wb') as f:
+                subjectDf = pickle.dump(subjectDf)
 
 if __name__=='__main__':
 
