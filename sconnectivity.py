@@ -8,6 +8,7 @@ from multiprocessing import Pool
 
 import os
 from os.path import join, basename, isdir, isfile
+import pickle
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -37,6 +38,11 @@ class get_subject_info:
 #         try:
         dataLoc, subject = param
 
+        #pickle_loc = join(dataLoc, subject, 'data')
+
+        #if 
+
+        
         nuclei_dict = {"LPFC":1, "LTC":2, "MPFC":3, "MTC":4,
                        "OCC":5, "OFC":6, "PC":7, "SMC":8}
 
@@ -60,8 +66,29 @@ class get_subject_info:
                     img_files.append(join(root, f))
 
         roi_files = [x for x in img_files if 'ROI' in x and re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE)]
+        thalamus_roi_files = [x for x in img_files if 'ROI' in x and re.search('thalamus.nii.gz', x, re.IGNORECASE)]
         seed_files = [x for x in img_files if re.search('segmentation_fnirt.+seeds_to', x)]
         biggest_files = [x for x in img_files if re.search('biggest', x)]
+
+        thalamus_roi_df = pd.DataFrame()
+        for roi_file in thalamus_roi_files:
+            roi_basename = basename(roi_file)
+
+            space = get_space(roi_basename)
+            side = get_side(roi_basename)
+
+            roi_map = get_map(roi_file)
+            mk_map = get_matching_mk_map(space)
+
+            roi_volume = count_nonzero(roi_map)
+            roi_mk = mean(mk_map[(mk_map!=0) & (roi_map>0)])
+
+            df = pd.DataFrame({'subject':[subject],
+                               'space':space,
+                               'side':side,
+                               'thalamus_volume':roi_volume,
+                               'thalamus_mk':roi_mk})
+            thalamus_roi_df = pd.concat([thalamus_roi_df, df])
 
         roi_df = pd.DataFrame()
         for roi_file in roi_files:
@@ -80,7 +107,7 @@ class get_subject_info:
             df = pd.DataFrame({'subject':[subject],
                                'space':space,
                                'cortex':cortex,
-                               'threshold':thr,
+                               #'threshold':thr,
                                'side':side,
                                'cortex_volume':roi_volume,
                                'cortex_mk':roi_mk})
@@ -159,7 +186,11 @@ class get_subject_info:
                              on=['subject', 'cortex', 'side', 'space'],
                              how='outer')
 
-        subjectDf = subjectDf.sort_values(by=['subject','cortex', 'side', 'space'])
+        subjectDf = pd.merge(thalamus_roi_df, subjectDf,
+                             on=['subject', 'side', 'space'],
+                             how='right')
+
+        subjectDf = subjectDf.sort_values(by=['subject', 'cortex', 'side', 'space'])
 
         self.roi_df = roi_df
         self.seed_df = seed_df
