@@ -13,7 +13,6 @@ import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
 def total_connectivity_estimation(seed_map):
     return seed_map.sum()
 
@@ -32,10 +31,6 @@ def get_volume(img_map):
 def get_map(f):
     return nb.load(f).get_data()
 
-
-
-
-
 class get_subject_info:
     '''
     True or False : thalamus, roi, biggest, seed
@@ -46,16 +41,19 @@ class get_subject_info:
         for biggest_file in self.biggest_files:
             biggest_basename = basename(biggest_file)
 
-            thr = get_thr(biggest_basename)
-            space = get_space(biggest_basename)
-            side = get_side(biggest_file)
+            thr = self.get_thr(biggest_basename)
+            space = self.get_space(biggest_basename)
+            side = self.get_side(biggest_file)
             biggest_map = get_map(biggest_file)
             mk_map = self.get_matching_mk_map(space)
+            md_map = self.get_matching_md_map(space)
+            
             #mk_map = mk_map_fs
 
             for cortex, number in self.nuclei_dict.iteritems():
                 biggest_volume = count_nonzero(biggest_map[biggest_map == number])
                 biggest_mk = mean(mk_map[(mk_map != 0) & (biggest_map == number)])
+                biggest_md = mean(md_map[(md_map != 0) & (biggest_map == number)])
 
                 df = pd.DataFrame({'subject':[self.subject],
                                    'space':space,
@@ -63,7 +61,8 @@ class get_subject_info:
                                    'threshold':thr,
                                    'side':side,
                                    'biggest_volume':biggest_volume,
-                                   'biggest_mk':biggest_mk})
+                                   'biggest_mk':biggest_mk,
+                                   'biggest_md':biggest_md})
 
                 biggest_df = pd.concat([biggest_df, df])
         self.biggest_df = biggest_df
@@ -73,16 +72,18 @@ class get_subject_info:
         for seed_file in self.seed_files:
             seed_basename = basename(seed_file)
 
-            thr = get_thr(seed_basename)
-            space = get_space(seed_basename)
-            side = get_side(seed_basename)
-            cortex = get_cortex(seed_basename)
+            thr = self.get_thr(seed_basename)
+            space = self.get_space(seed_basename)
+            side = self.get_side(seed_basename)
+            cortex = self.get_cortex(seed_basename)
             seed_map = get_map(seed_file)
             mk_map = self.get_matching_mk_map(space)
+            md_map = self.get_matching_md_map(space)
 
             seed_volume = count_nonzero(seed_map)
-            seed_mk = mean(mk_map[(mk_map!=0) & (seed_map>0)])
-            connectivity = sum(seed_map[seed_map!=0])
+            seed_mk = mean(mk_map[(mk_map != 0) & (seed_map > 0)])
+            seed_md = mean(md_map[(md_map != 0) & (seed_map > 0)])
+            connectivity = sum(seed_map[seed_map != 0])
 
             df = pd.DataFrame({'subject':[self.subject],
                                'space':space,
@@ -91,8 +92,8 @@ class get_subject_info:
                                'side':side,
                                'seed_volume':seed_volume,
                                'connectivity':connectivity,
-                               'seed_mk':seed_mk})
-
+                               'seed_mk':seed_mk,
+                               'seed_md':seed_md})
 
             seed_df = pd.concat([seed_df, df])
         self.seed_df = seed_df
@@ -102,15 +103,17 @@ class get_subject_info:
         for roi_file in self.roi_files:
             roi_basename = basename(roi_file)
 
-            thr = get_thr(roi_basename)
-            space = get_space(roi_basename)
-            side = get_side(roi_basename)
-            cortex = get_cortex(roi_basename)
+            thr = self.get_thr(roi_basename)
+            space = self.get_space(roi_basename)
+            side = self.get_side(roi_basename)
+            cortex = self.get_cortex(roi_basename)
             roi_map = get_map(roi_file)
             mk_map = self.get_matching_mk_map(space)
+            md_map = self.get_matching_md_map(space)
 
             roi_volume = count_nonzero(roi_map)
             roi_mk = mean(mk_map[(mk_map!=0) & (roi_map>0)])
+            roi_md = mean(md_map[(md_map!=0) & (roi_map>0)])
 
             df = pd.DataFrame({'subject':[self.subject],
                                'space':space,
@@ -118,7 +121,8 @@ class get_subject_info:
                                #'threshold':thr,
                                'side':side,
                                'cortex_volume':roi_volume,
-                               'cortex_mk':roi_mk})
+                               'cortex_mk':roi_mk,
+                               'cortex_md':roi_md})
             roi_df = pd.concat([roi_df, df])
         self.roi_df = roi_df
 
@@ -131,7 +135,7 @@ class get_subject_info:
 
         self.roi_files = [x for x in img_files if 'ROI' in x and re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE)]
         self.thalamus_roi_files = [x for x in img_files if 'ROI' in x and re.search('thalamus.nii.gz', x, re.IGNORECASE)]
-        self.seed_files = [x for x in img_files if re.search('segmentation_fnirt.+seeds_to', x)]
+        self.seed_files = [x for x in img_files if re.search('segmentation.+seeds_to', x)]
         self.biggest_files = [x for x in img_files if re.search('biggest', x)]
 
     def get_thalamus_information(self):
@@ -139,20 +143,23 @@ class get_subject_info:
         for roi_file in self.thalamus_roi_files:
             roi_basename = basename(roi_file)
 
-            space = get_space(roi_basename)
-            side = get_side(roi_basename)
+            space = self.get_space(roi_basename)
+            side = self.get_side(roi_basename)
 
             roi_map = get_map(roi_file)
             mk_map = self.get_matching_mk_map(space)
+            md_map = self.get_matching_md_map(space)
 
             roi_volume = count_nonzero(roi_map)
             roi_mk = mean(mk_map[(mk_map!=0) & (roi_map>0)])
+            roi_md = mean(md_map[(md_map!=0) & (roi_map>0)])
 
             df = pd.DataFrame({'subject':[self.subject],
                                'space':space,
                                'side':side,
                                'thalamus_volume':roi_volume,
-                               'thalamus_mk':roi_mk})
+                               'thalamus_mk':roi_mk,
+                               'thalamus_md':roi_md})
             thalamus_roi_df = pd.concat([thalamus_roi_df, df])
         self.thalamus_roi_df = thalamus_roi_df
 
@@ -161,7 +168,7 @@ class get_subject_info:
 #         try:
         #dataLoc, subject  = param
 
-        self.dataLoc, self.subject, self.thalamus, self.roi, self.biggest, self.seed = param
+        self.dataLoc, self.subject, self.thalamus, self.roi, self.biggest, self.seed, self.all = param
         print(self.subject)
 
         self.nuclei_dict = {"LPFC":1, "LTC":2, "MPFC":3, "MTC":4,
@@ -172,15 +179,21 @@ class get_subject_info:
         self.mk_map_fs = get_map(join(self.dkiDir, 'kmean_freesurfer_space.nii.gz'))
         self.mk_map_dki = get_map(join(self.dkiDir, 'kmean.nii'))
 
+        self.dtiDir = join(self.subjDir, 'DTI')
+        self.md_map_fs = get_map(join(self.dtiDir, 'DTI_MD_fs.nii.gz'))
+        self.md_map_dti = get_map(join(self.dtiDir, 'DTI_MD.nii.gz'))
+
         # file information
-        get_thr = lambda x: int(re.search('\d{1,2}', x).group(0)) if re.search('\d{1,2}', x) else 0
-        get_space = lambda x: 'dki' if re.search('dki', x) else 'fs'
-        get_side = lambda x: 'left' if re.search('lh|left', x) else 'right'
+        self.get_thr = lambda x: int(re.search('\d{1,2}', x).group(0)) if re.search('\d{1,2}', x) else 0
+        self.get_space = lambda x: 'dki' if re.search('dki', x) else 'fs'
+        self.get_side = lambda x: 'left' if re.search('lh|left', x) else 'right'
         self.get_matching_mk_map = lambda x: self.mk_map_dki if x=='dki' else self.mk_map_fs
-        get_cortex = lambda x: re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE).group(0)
+        self.get_matching_md_map = lambda x: self.md_map_dti if x=='dki' else self.md_map_fs
+        self.get_cortex = lambda x: re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE).group(0)
 
         pickle_loc = join(self.dataLoc, self.subject, 'data.pkl')
-        if isfile(pickle_loc):
+        if isfile(pickle_loc) and self.all == 'False':
+            print('Loading')
             print(pickle_loc)
             with open(pickle_loc, 'rb') as f:
                 self.subjectDf = pickle.load(f)
@@ -188,11 +201,7 @@ class get_subject_info:
             self.get_img_files()
 
             thalamus_roi_pickle = join(self.dataLoc, self.subject, 'thalamus_roi.pkl')
-            if self.thalamus and not isfile(thalamus_roi_pickle):
-                self.get_thalamus_information()
-                with open(thalamus_roi_pickle, 'wb') as f:
-                    pickle.dump(self.thalamus_roi_df, f)
-            elif not self.thalamus and not isfile(thalamus_roi_pickle):
+            if self.thalamus:
                 self.get_thalamus_information()
                 with open(thalamus_roi_pickle, 'wb') as f:
                     pickle.dump(self.thalamus_roi_df, f)
@@ -201,11 +210,7 @@ class get_subject_info:
                     self.thalamus_roi_df = pickle.load(f)
 
             roi_pickle = join(self.dataLoc, self.subject, 'roi.pkl')
-            if self.roi and not isfile(roi_pickle):
-                self.get_roi_information()
-                with open(roi_pickle, 'wb') as f:
-                    pickle.dump(self.roi_df, f)
-            elif not self.roi and not isfile(roi_pickle):
+            if self.roi:
                 self.get_roi_information()
                 with open(roi_pickle, 'wb') as f:
                     pickle.dump(self.roi_df, f)
@@ -214,11 +219,7 @@ class get_subject_info:
                     self.roi_df = pickle.load(f)
 
             biggest_pickle = join(self.dataLoc, self.subject, 'biggest.pkl')
-            if self.biggest and not isfile(biggest_pickle):
-                self.get_biggest_information()
-                with open(biggest_pickle, 'wb') as f:
-                    pickle.dump(self.biggest_df, f)
-            elif not self.biggest and not isfile(biggest_pickle):
+            if self.biggest:
                 self.get_biggest_information()
                 with open(biggest_pickle, 'wb') as f:
                     pickle.dump(self.biggest_df, f)
@@ -227,11 +228,7 @@ class get_subject_info:
                     self.biggest_df = pickle.load(f)
 
             seed_pickle = join(self.dataLoc, self.subject, 'seed.pkl')
-            if self.seed and not isfile(seed_pickle):
-                self.get_seed_information()
-                with open(seed_pickle, 'wb') as f:
-                    pickle.dump(self.seed_df, f)
-            elif not self.seed and not isfile(seed_pickle):
+            if self.seed:
                 self.get_seed_information()
                 with open(seed_pickle, 'wb') as f:
                     pickle.dump(self.seed_df, f)
@@ -245,7 +242,7 @@ class get_subject_info:
 
             seed_df = seed_df.pivot_table(index=['subject', 'space','side','cortex'], 
                                           columns='threshold', 
-                                          values=['seed_mk', 'seed_volume', 'connectivity', 'biggest_volume', 'biggest_mk'], 
+                                          values=['seed_mk', 'seed_volume', 'connectivity', 'biggest_volume', 'biggest_mk', 'biggest_md'], 
                                           aggfunc=np.sum).reset_index()
 
             subjectDf = pd.merge(self.roi_df, seed_df,
