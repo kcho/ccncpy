@@ -9,7 +9,7 @@ def main(dirLoc):
 
     serverList = pd.DataFrame()
     for subject in subjectList:
-        fsLog = join(dirLoc, subject, 'scripts/recon-all.log')
+        fsLog = join(dirLoc, subject, 'FREESURFER/scripts/recon-all.log')
         with open(fsLog, 'r') as f:
             server = f.readlines()[9].split(' ')[0:2]
             subj_dict = {subject:{'server':' '.join(server)}}
@@ -18,7 +18,7 @@ def main(dirLoc):
     serverList = serverList.reset_index()
     serverList.columns = ['subject', 'server']
     serverList['group'] = serverList['subject'].str[:3]
-    print serverList.reset_index().groupby(['group', 'server']).count()
+    print(serverList.reset_index().groupby(['group', 'server']).count())
 
 if __name__=='__main__':
     main(sys.argv[1])
