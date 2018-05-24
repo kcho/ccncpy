@@ -135,13 +135,12 @@ class get_subject_info:
 
         self.roi_files = [x for x in img_files if 'ROI' in x and re.search('lpfc|ltc|mpfc|mtc|occ|ofc|pc|smc', x, re.IGNORECASE)]
         self.thalamus_roi_files = [x for x in img_files if 'ROI' in x and re.search('thalamus.nii.gz', x, re.IGNORECASE)]
-        self.seed_files = [x for x in img_files if re.search('segmentation.+seeds_to', x)]
-        self.biggest_files = [x for x in img_files if re.search('biggest', x)]
+        self.seed_files = [x for x in img_files if re.search('segmentation.+seeds_to', x) and not re.search('mni', x)]
+        self.biggest_files = [x for x in img_files if re.search('biggest', x) and not re.search('mni', x)]
 
     def get_thalamus_information(self):
         thalamus_roi_df = pd.DataFrame()
         for roi_file in self.thalamus_roi_files:
-            print(roi_file)
             roi_basename = basename(roi_file)
 
             space = self.get_space(roi_basename)
