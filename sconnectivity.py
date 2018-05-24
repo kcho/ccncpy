@@ -50,7 +50,7 @@ class get_subject_info:
             
             #mk_map = mk_map_fs
 
-            for cortex, number in self.nuclei_dict.iteritems():
+            for cortex, number in self.nuclei_dict.items():
                 biggest_volume = count_nonzero(biggest_map[biggest_map == number])
                 biggest_mk = mean(mk_map[(mk_map != 0) & (biggest_map == number)])
                 biggest_md = mean(md_map[(md_map != 0) & (biggest_map == number)])
@@ -141,6 +141,7 @@ class get_subject_info:
     def get_thalamus_information(self):
         thalamus_roi_df = pd.DataFrame()
         for roi_file in self.thalamus_roi_files:
+            print(roi_file)
             roi_basename = basename(roi_file)
 
             space = self.get_space(roi_basename)
@@ -176,8 +177,8 @@ class get_subject_info:
 
         self.subjDir = join(self.dataLoc, self.subject)
         self.dkiDir = join(self.subjDir, 'DKI')
-        self.mk_map_fs = get_map(join(self.dkiDir, 'kmean_freesurfer_space.nii.gz'))
-        self.mk_map_dki = get_map(join(self.dkiDir, 'kmean.nii'))
+        self.mk_map_fs = get_map(join(self.dkiDir, 'kmean_freesurfer_space_old.nii.gz')) #kmean map without eddy
+        self.mk_map_dki = get_map(join(self.dkiDir, 'kmean_old.nii'))
 
         self.dtiDir = join(self.subjDir, 'DTI')
         self.md_map_fs = get_map(join(self.dtiDir, 'DTI_MD_fs.nii.gz'))
