@@ -31,6 +31,12 @@ def get_volume(img_map):
 def get_map(f):
     return nb.load(f).get_data()
 
+def get_waytotal(subjectDir, side):
+    with open(join(subjectDir, 'segmentation', 'side', 'waytotal'), 'r') as f:
+        waytotal = int(f.read())
+    return waytotal
+
+
 class get_subject_info:
     '''
     True or False : thalamus, roi, biggest, seed
@@ -96,6 +102,15 @@ class get_subject_info:
                                'seed_md':seed_md})
 
             seed_df = pd.concat([seed_df, df])
+
+        connectivity_sum_df = seed_df.groupby(['side', 
+                                               'space',
+                                               'threshold']).connectivity.sum().reset_index()
+        connectivity_sum_df.columns = ['side', 'space', 'threshold', 'connectivity_sum']
+        seed_df = pd.merge(seed_df, connectivity_sum_df,
+                           on=['side', 'space', 'threshold'],
+                           how='left')
+        seed_df['relative_connectivity'] = seed_df['connectivity'] / seed_df['connectivity_sum']
         self.seed_df = seed_df
 
     def get_roi_information(self):
