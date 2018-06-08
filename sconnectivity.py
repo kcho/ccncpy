@@ -25,7 +25,7 @@ def get_waytotal(subjectDir, side):
     '''
     Return waytotal
     '''
-    with open(join(subjectDir, 'segmentation', 'side', 'waytotal'), 'r') as f:
+    with open(join(subjectDir, 'segmentation', side, 'waytotal'), 'r') as f:
         waytotal = int(f.read())
     return waytotal
 
