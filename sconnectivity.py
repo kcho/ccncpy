@@ -100,8 +100,8 @@ class get_subject_info:
                                                'threshold']).total_connectivity.sum().reset_index()
         total_connectivity_sum_df.columns = ['side', 'space', 'threshold', 'total_connectivity_sum']
         # add waytotal
-        left_waytotal = get_waytotal(self.subjectDir, 'left')
-        right_waytotal = get_waytotal(self.subjectDir, 'right')
+        left_waytotal = get_waytotal(self.subjDir, 'left')
+        right_waytotal = get_waytotal(self.subjDir, 'right')
         waytotal_df = pd.DataFrame({'waytotal':[left_waytotal, right_waytotal],
                                     'side':['left', 'right']})
 
