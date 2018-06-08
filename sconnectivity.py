@@ -13,29 +13,21 @@ import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def total_connectivity_estimation(seed_map):
-    return seed_map.sum()
-
-def relative_connectivity_estimation(total_connectivity, sum_connectivity):
-    return total_connectivity/sum_connectivity
-
-def sum_connectivity_estimation(total_connectivity_array):
-    return total_connectivity_array.sum()
-
-def maksed_mean_map(img_map, mask_map):
-    return img_map[np.nonzero(mask_map)].mean()
-
-def get_volume(img_map):
-    return np.count_nonzero(img_map)
 
 def get_map(f):
+    '''
+    Read the nifti file and
+    return the matrix array
+    '''
     return nb.load(f).get_data()
 
 def get_waytotal(subjectDir, side):
+    '''
+    Return waytotal
+    '''
     with open(join(subjectDir, 'segmentation', 'side', 'waytotal'), 'r') as f:
         waytotal = int(f.read())
     return waytotal
-
 
 class get_subject_info:
     '''
@@ -89,7 +81,7 @@ class get_subject_info:
             seed_volume = count_nonzero(seed_map)
             seed_mk = mean(mk_map[(mk_map != 0) & (seed_map > 0)])
             seed_md = mean(md_map[(md_map != 0) & (seed_map > 0)])
-            connectivity = sum(seed_map[seed_map != 0])
+            total_connectivity = sum(seed_map[seed_map != 0])
 
             df = pd.DataFrame({'subject':[self.subject],
                                'space':space,
@@ -97,20 +89,32 @@ class get_subject_info:
                                'threshold':thr,
                                'side':side,
                                'seed_volume':seed_volume,
-                               'connectivity':connectivity,
+                               'total_connectivity':total_connectivity,
                                'seed_mk':seed_mk,
                                'seed_md':seed_md})
 
             seed_df = pd.concat([seed_df, df])
 
-        connectivity_sum_df = seed_df.groupby(['side', 
+        total_connectivity_sum_df = seed_df.groupby(['side', 
                                                'space',
-                                               'threshold']).connectivity.sum().reset_index()
-        connectivity_sum_df.columns = ['side', 'space', 'threshold', 'connectivity_sum']
-        seed_df = pd.merge(seed_df, connectivity_sum_df,
+                                               'threshold']).total_connectivity.sum().reset_index()
+        total_connectivity_sum_df.columns = ['side', 'space', 'threshold', 'total_connectivity_sum']
+        # add waytotal
+        left_waytotal = get_waytotal(self.subjectDir, 'left')
+        right_waytotal = get_waytotal(self.subjectDir, 'right')
+        waytotal_df = pd.DataFrame({'waytotal':[left_waytotal, right_waytotal],
+                                    'side':['left', 'right']})
+
+        total_connectivity_sum_df = pd.merge(total_connectivity_sum_df,
+                                                   waytotal_df,
+                                                   on='side',
+                                                   how='left')
+
+        seed_df = pd.merge(seed_df, total_connectivity_sum_df,
                            on=['side', 'space', 'threshold'],
                            how='left')
-        seed_df['relative_connectivity'] = seed_df['connectivity'] / seed_df['connectivity_sum']
+        seed_df['relative_connectivity'] = seed_df['total_connectivity'] / seed_df['total_connectivity_sum']
+        seed_df['waytotal_connectivity'] = seed_df['total_connectivity'] / seed_df['waytotal']
         self.seed_df = seed_df
 
     def get_roi_information(self):
@@ -180,9 +184,6 @@ class get_subject_info:
 
 
     def __init__(self, param):
-#         try:
-        #dataLoc, subject  = param
-
         self.dataLoc, self.subject, self.thalamus, self.roi, self.biggest, self.seed, self.all = param
         print(self.subject)
 
@@ -257,7 +258,7 @@ class get_subject_info:
 
             seed_df = seed_df.pivot_table(index=['subject', 'space','side','cortex'], 
                                           columns='threshold', 
-                                          values=['seed_mk', 'seed_volume', 'connectivity', 'biggest_volume', 'biggest_mk', 'biggest_md'], 
+                                          values=['seed_mk', 'seed_volume', 'total_connectivity', 'relative_connectivity', 'waytotal_connectivity', 'biggest_volume', 'biggest_mk', 'biggest_md'], 
                                           aggfunc=np.sum).reset_index()
 
             subjectDf = pd.merge(self.roi_df, seed_df,
