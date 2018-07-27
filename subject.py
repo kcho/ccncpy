@@ -1,10 +1,14 @@
 from os.path import join
 import numpy as np
+import nibabel as nb
 import os
 from xml.dom import minidom
 from collections import Counter
 import itertools
 import pandas as pd
+import re
+from matplotlib.colors import from_levels_and_colors
+
 
 class mniT1Data:
     def __init__(self):
@@ -44,7 +48,7 @@ class talairachData:
 
 
 
-class talairach_labels:
+class talairachLabels:
     def __init__(self):
         self.xmldoc = minidom.parse(join(os.environ['FSLDIR'],
                                          'data/atlases/Talairach.xml'))
@@ -60,7 +64,7 @@ class talairach_labels:
         self.talairach_df.index.name='label number'
 
 
-class talairach_thalamus_labels(talairach_labels):
+class talairachThalamusLabels(talairachLabels):
     def __init__(self):
         super().__init__()
         # select thalamus labels
@@ -80,7 +84,7 @@ class talairach_thalamus_labels(talairach_labels):
         
 
     
-class talairach_thalamus_labels_color(talairach_thalamus_labels):
+class talirachThalamusLabelsColor(talairach_thalamus_labels):
     def __init__(self):
         super().__init__()        
         self.colors = np.array([[0.80526917, 0.76246004, 0.71236253],
@@ -113,7 +117,7 @@ class talairach_thalamus_labels_color(talairach_thalamus_labels):
 
 
 
-class talairachThalamusImage(talairach_thalamus_labels_color, talairachData):
+class talairachThalamusImage(talirachThalamusLabelsColor, talairachData):
     def __init__(self):
         talairachData.__init__(self)
         super().__init__()        
@@ -129,7 +133,7 @@ class talairachThalamusImage(talairach_thalamus_labels_color, talairachData):
             np.place(self.talairach_thalamus_data, self.talairach_thalamus_data==origNum, newNum)
 
 
-class behrens_mask():
+class behrensMask():
     def __init__(self):
         self.behrens_mask_loc = join(os.environ['FSLDIR'], 
                                 'data/atlases/Thalamus', 
@@ -138,7 +142,7 @@ class behrens_mask():
         self.behrens_mask_data = self.behrens_mask_img.get_data()
         self.behrens_mask_data_masked = np.ma.masked_where(self.behrens_mask_data == 0, self.behrens_mask_data)
 
-class behrens_mask_color():
+class behrensMaskColor():
     def __init__(self):
         self.behrensRoiNumDict = {"Primary motor":1,
                                   "Sensory":2,
