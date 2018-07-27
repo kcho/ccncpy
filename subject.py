@@ -113,7 +113,7 @@ class talairach_thalamus_labels_color(talairach_thalamus_labels):
 
 
 
-class talairach_thalamus_image(talairach_thalamus_labels_color, talairachData):
+class talairachThalamusImage(talairach_thalamus_labels_color, talairachData):
     def __init__(self):
         talairachData.__init__(self)
         super().__init__()        
