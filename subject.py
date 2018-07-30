@@ -166,3 +166,30 @@ class behrensMaskColor():
                                               'colors':list(self.behrens_colors)})
         self.behrens_color_df['name']  = self.behrens_color_df['number'].map(self.behrensNumRoiDict)
         self.behrens_label_to_color_dict = self.behrens_color_df.set_index('name').to_dict()['colors']
+
+get_long_side=lambda x: 'left' if x=='lh' else 'right'
+
+def get_seed_map_fsl_thr_loc_mni(subject_loc, side, cortex, thrP=90):    
+    side_long = get_long_side(side)
+    seed_map_loc = join(subject_loc, 'segmentation', side_long, str(thrP)+'thrP', 'mni_{}_seeds_to_{}_{}.nii.gz'.format(thrP, side, cortex))
+    return seed_map_loc
+
+
+def get_seed_map_fsl_thr_loc(subject_loc, side, cortex, thrP=90):    
+    side_long = get_long_side(side)
+    seed_map_loc = join(subject_loc, 'segmentation', side_long, str(thrP)+'thrP', '{}_seeds_to_{}_{}.nii.gz'.format(thrP, side, cortex))
+    return seed_map_loc
+
+def get_seed_map_loc(subject_loc, side, cortex):    
+    side_long = get_long_side(side)
+    seed_map_loc = join(subject_loc, 'segmentation', side_long, 'mni_seeds_to_{}_{}.nii.gz'.format(side, cortex))
+    return seed_map_loc
+
+def get_tract_map_loc(subject_loc, side, cortex):
+    side_long = get_long_side(side)
+    tract_map_loc = join(subject_loc, 'segmentation', side_long, 'fig', cortex, 'mni_fdt_paths.nii.gz')
+    return tract_map_loc
+
+def get_dice_coeff(data1_region, data2_region):
+    diceC = np.sum(data1_region * data2_region) * 2.0 / (np.sum(data1_region) + np.sum(data2_region))
+    return diceC
