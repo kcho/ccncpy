@@ -38,15 +38,12 @@ class havardOxfordThalamusData:
 
         self.mni_subcortex_data_masked = np.ma.masked_where(~np.isin(self.mni_subcortex_data, [15, 4]), self.mni_subcortex_data)
 
-
 class talairachData:
     def __init__(self):
         self.talairach = join(os.environ['FSLDIR'], 
                               'data/atlases/Talairach/Talairach-labels-1mm.nii.gz')
         self.talairach_img = nb.load(self.talairach)
         self.talairach_data = self.talairach_img.get_data()
-
-
 
 class talairachLabels:
     def __init__(self):
@@ -62,7 +59,6 @@ class talairachLabels:
 
         self.talairach_df = pd.DataFrame.from_dict(self.talairach_dict, orient='index')
         self.talairach_df.index.name='label number'
-
 
 class talairachThalamusLabels(talairachLabels):
     def __init__(self):
@@ -80,9 +76,6 @@ class talairachThalamusLabels(talairachLabels):
         self.nuclei_list = self.talairach_thalamus_df['name'].unique()
         self.name_num_dict = dict(zip(self.nuclei_list, range(1, len(self.nuclei_list)+1)))
         self.talairach_thalamus_df['roi_number'] = self.talairach_thalamus_df['name'].map(self.name_num_dict)
-
-        
-
     
 class talirachThalamusLabelsColor(talairach_thalamus_labels):
     def __init__(self):
@@ -115,8 +108,6 @@ class talirachThalamusLabelsColor(talairach_thalamus_labels):
         self.number_to_colors_dict = self.color_df.set_index('number').to_dict()['colors']
         self.talairach_label_to_color_dict = self.talairach_thalamus_df.set_index('name').to_dict()['colors']
 
-
-
 class talairachThalamusImage(talirachThalamusLabelsColor, talairachData):
     def __init__(self):
         talairachData.__init__(self)
@@ -132,6 +123,13 @@ class talairachThalamusImage(talirachThalamusLabelsColor, talairachData):
         for origNum, newNum in self.talairach_thalamus_df.set_index('label number').roi_number.to_dict().items():
             np.place(self.talairach_thalamus_data, self.talairach_thalamus_data==origNum, newNum)
 
+    def estimate_overlap_count_with(self, nibabel_img):
+        '''
+        Returns dict overlap voxel count
+        '''
+        overlap_img = np.ma.masked_where(nibabel_img, self.talairach_thalamus_data)
+        voxel_count = Counter(np.array(overlap_img.filled()).ravel())
+        return voxel_count
 
 class behrensMask():
     def __init__(self):
