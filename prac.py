@@ -29,7 +29,7 @@ import roiExtraction
 # Ipython notebook
 from matplotlib.widgets import Slider, Button, RadioButtons
 from ipywidgets import *
-get_ipython().run_line_magic('matplotlib', 'notebook') # Jupyter notebook
+#get_ipython().run_line_magic('matplotlib', 'notebook') # Jupyter notebook
 
 def plot_4d_dwi(img_data:np.array):
     '''
@@ -285,7 +285,10 @@ class psyscanSettings(mniSettings):
                           '15':'Edinburgh', '16':'London',
                           '17':'Toronto', '18':'Seoul',
                           '19':'Sao Paulo', '20':'Hong King'}
-        self.site_name = self.site_dict[self.site]
+        try:
+            self.site_name = self.site_dict[self.site]
+        except:
+            self.site_name = 'other'
         echo_spacing_dict = {'01':0.56,
                              '02':0.69,
                              '04':0.53,
@@ -1198,7 +1201,7 @@ class subjectWithFsDti(tcTractSettings):
     def t1_to_dti_registration_check(self):
         check_two_images(self.t1_to_dti_flirt_out, self.nodif)
 
-class dtiOnlySubject(dtiEddyBedp):
+class dtiOnlySubject(dtiSettings):
     def __init__(self, subject_dir):
         super().__init__(subject_dir)
 
@@ -1214,12 +1217,20 @@ class psyscanStudy:
     def __init__(self, data_loc):
         self.data_loc = data_loc
         self.all_subject_locs = [join(data_loc, x) for x in os.listdir(data_loc) if x.startswith('PSY')]
-        self.all_subject_with_DTI_and_FS_locs = [x for x in all_subject_locs if 'DTI' in os.listdir(x) and 'FREESURFER' in os.listdir(x)]
+        #self.all_subject_with_DTI_and_FS_locs = [x for x in all_subject_locs if 'DTI' in os.listdir(x) and 'FREESURFER' in os.listdir(x)]
         
-        self.subjects_df = pd.DataFrame({'subject':[self.all_subject_locs]})
-        get_group = lambda x: psyscanSettings(x).group
-        self.subjects_df['group'] = self.subjects_df.apply(get_group)
-        print(self.subjects_df)
+        subjects_df = pd.DataFrame({'subject_loc':self.all_subject_locs})
+        subjects_df.subject_class = subjects_df.subject_loc.apply(psyscanSettings)
+        subjects_df['subject'] = subjects_df.subject_loc.apply(basename)
+        subjects_df['group'] = subjects_df.subject_class.apply(lambda x: x.group)
+        subjects_df['site'] = subjects_df.subject_class.apply(lambda x: x.site)
+        subjects_df['site_name'] = subjects_df.subject_class.apply(lambda x: x.site_name)
+        subjects_df['fs_data'] = subjects_df.subject_loc.apply(lambda x: True if 'FREESURFER' in os.listdir(x) else False)
+        subjects_df['dti_data'] = subjects_df.subject_loc.apply(lambda x: True if 'DTI' in os.listdir(x) else False)
+        subjects_df['both_data'] = subjects_df.fs_data & subjects_df.dti_data
+        for dti_img in ['
+        print(subjects_df[subjects_df.both_data].groupby('group').subject.count())
+        #print(subjects_df.groupby(['group', 'both_data']).count())
 
 
 if __name__ == "__main__":
