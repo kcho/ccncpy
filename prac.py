@@ -86,7 +86,7 @@ def plot_4d_dwi_pdf(img_loc, outname, z_gap=3, ncols=15, page_num=7):
     pdf.close()
     print('PDF saved at {}'.format(outname))
 
-def plot_3d_dwi_pdf(img_loc, outname, ncols=15):
+def plot_3d_dwi_pdf(img_loc, outname, ncols=6, nrows=4):
     '''
     Plot 3d dwi data. Save as PDF.
     - vmin / vmax percentile
@@ -95,40 +95,50 @@ def plot_3d_dwi_pdf(img_loc, outname, ncols=15):
 
     img_data = nb.load(img_loc).get_data()
 
-    # Match brightness of the diffusion weighted volumes
-    vmin = img_data[:,:,:].min() # vmin and vmax estimation in the last volume
-    vmax = img_data[:,:,:].max() # which is likely be non-b0 image
-
     # Initialise fig and ax
     # Columns : different z-slices
     # Rows : differnt volumes of the dwi data
-
     pdf = PdfPages(outname)
-    nrows = math.ceil(img_data.shape[2] / ncols)
+    #nrows = math.ceil(img_data.shape[2] / ncols)
+    page_num = math.ceil(img_data.shape[2] / ncols / nrows)
 
-    fig, axes = plt.subplots(ncols=ncols, 
-                             nrows=nrows, 
-                             figsize=(11.69, 8.27), 
-                             dpi=300)
 
-    fig.suptitle('{}'.format(img_loc), 
-                 fontsize=14, 
-                 fontweight='bold')
+    # Match brightness of the diffusion weighted volumes
+    vmin = img_data[img_data!=0].min() # vmin and vmax estimation in the last volume
+    vmax = img_data.max() # which is likely be non-b0 image
 
-    slice_num = 0
-    for slice_num, ax in enumerate(np.ravel(axes)): # for each axes
-        img = ax.imshow(img_data[:,:,slice_num], vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
-        ax.set_axis_off()
-        slice_num += 1
-        ax.text(0.5, 0, 
-             slice_num,
-             verticalalignment='center', horizontalalignment='center',
-             #rotation=90, 
-             transform=ax.transAxes,
-             fontsize=10)
-    plt.subplots_adjust(wspace=0, hspace=0)
-    pdf.savefig(fig)  # saves the current figure into a pdf page
-    plt.close()
+    slice_num_s = 0
+    for page in range(0, page_num): # for each page
+        fig, axes = plt.subplots(ncols=ncols, 
+                                 nrows=nrows, 
+                                 figsize=(11.69, 8.27), 
+                                 dpi=300)
+
+        fig.suptitle('{}'.format(img_loc), 
+                     fontsize=14, 
+                     fontweight='bold')
+
+        for slice_num, ax in enumerate(np.ravel(axes), slice_num_s): # for each axes
+            print(slice_num)
+            try:
+                img = ax.imshow(img_data[:,:,slice_num], cmap='gray', vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
+                ax.text(0.5, 0.1, 
+                     slice_num+1,
+                     verticalalignment='bottom', horizontalalignment='center',
+                     #rotation=90, 
+                     transform=ax.transAxes,
+                     fontsize=10, color='white')
+                ax.set_axis_off()
+            except:
+                #pass
+                img = ax.imshow(np.zeros_like(img_data)[:,:,0], cmap='gray')#, vmin=vmin, vmax=vmax)
+                ax.set_axis_off()
+
+        plt.subplots_adjust(wspace=0, hspace=0)
+        pdf.savefig(fig)  # saves the current figure into a pdf page
+        plt.close()
+        slice_num_s = slice_num+1
+
     pdf.close()
     print('PDF saved at {}'.format(outname))
 
