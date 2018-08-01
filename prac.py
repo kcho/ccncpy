@@ -31,6 +31,33 @@ from matplotlib.widgets import Slider, Button, RadioButtons
 from ipywidgets import *
 #get_ipython().run_line_magic('matplotlib', 'notebook') # Jupyter notebook
 
+
+def plot_4d_dwi_pdf(img_data:np.array, outname, zgap=3):
+    '''
+    Plot 4d dwi data. Save as PDF.
+    - vmin / vmax percentile
+    '''
+
+    # Match brightness of the diffusion weighted volumes
+    vmin = img_data[:,:,:,-1].min() # vmin and vmax estimation in the last volume
+    vmax = img_data[:,:,:,-1].max() # which is likely be non-b0 image
+
+    z_num = img_data.shape[3]
+
+    # Initialise fig and ax
+    # Columns : different z-slices
+    # Rows : differnt volumes of the dwi data
+    fig, axes = plt.subplots(ncols=10, nrows=z_num, figsize=(8.27,11.69))
+
+    # For each volumes
+    for vol_num, row_axes in enumerate(axes):
+        slice_num = 5
+        for col_num, ax in enumerate(row_axes):
+            img = ax.imshow(img_data[:,:,slice_num,vol_num], vmin=vmin, vmax=vmax, aspect=img_data[0]/img_data[1])
+
+    fig.savefig(outname)
+
+
 def plot_4d_dwi(img_data:np.array):
     '''
     Plot 4d data with the widgets
@@ -1228,8 +1255,8 @@ class psyscanStudy:
         subjects_df['fs_data'] = subjects_df.subject_loc.apply(lambda x: True if 'FREESURFER' in os.listdir(x) else False)
         subjects_df['dti_data'] = subjects_df.subject_loc.apply(lambda x: True if 'DTI' in os.listdir(x) else False)
         subjects_df['both_data'] = subjects_df.fs_data & subjects_df.dti_data
-        for dti_img in ['
-        print(subjects_df[subjects_df.both_data].groupby('group').subject.count())
+        #for dti_img in ['
+        #print(subjects_df[subjects_df.both_data].groupby('group').subject.count())
         #print(subjects_df.groupby(['group', 'both_data']).count())
 
 
