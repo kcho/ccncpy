@@ -1402,10 +1402,22 @@ class psyscanStudy:
         #for dti_img in ['
         #print(subjects_df[subjects_df.both_data].groupby('group').subject.count())
         #print(subjects_df.groupby(['group', 'both_data']).count())
+        self.df = subjects_df
 
 if __name__ == "__main__":
-    #data_loc = '/Volumes/CCNC_4T/psyscan/data'
-    #psyscan_study = psyscanStudy(data_loc)
+    data_loc = '/Volumes/CCNC_4T/psyscan/data'
+    psyscan_study = psyscanStudy(data_loc)
+    all_subject_with_DTI_and_FS_locs = psyscan_study.df.groupby('both_data').get_group(True).subject_loc
+    len(all_subject_with_DTI_and_FS_locs)
+    #os.environ['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS']='1'
+
+    #def tmp_func(x):
+        #tmp = subjectWithFsDti(x)
+        #tmp.run_dti_unwarp()
+
+    #with Pool(processes=20) as pool:
+        #results = pool.map(tmp_func, all_subject_with_DTI_and_FS_locs)
+
 
     dti_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/DTI.nii.gz'
     dti_img = nb.load(dti_loc)
