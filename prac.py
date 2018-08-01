@@ -31,6 +31,7 @@ from matplotlib.widgets import Slider, Button, RadioButtons
 from matplotlib.backends.backend_pdf import PdfPages
 
 import math
+from tabulate import tabulate
 
 from ipywidgets import *
 #get_ipython().run_line_magic('matplotlib', 'notebook') # Jupyter notebook
@@ -1391,7 +1392,7 @@ class psyscanStudy:
         #self.all_subject_with_DTI_and_FS_locs = [x for x in all_subject_locs if 'DTI' in os.listdir(x) and 'FREESURFER' in os.listdir(x)]
         
         subjects_df = pd.DataFrame({'subject_loc':self.all_subject_locs})
-        subjects_df.subject_class = subjects_df.subject_loc.apply(psyscanSettings)
+        subjects_df['subject_class'] = subjects_df.subject_loc.apply(psyscanSettings)
         subjects_df['subject'] = subjects_df.subject_loc.apply(basename)
         subjects_df['group'] = subjects_df.subject_class.apply(lambda x: x.group)
         subjects_df['site'] = subjects_df.subject_class.apply(lambda x: x.site)
@@ -1402,13 +1403,15 @@ class psyscanStudy:
         #for dti_img in ['
         #print(subjects_df[subjects_df.both_data].groupby('group').subject.count())
         #print(subjects_df.groupby(['group', 'both_data']).count())
+        print(tabulate(subjects_df.groupby(['fs_data', 'dti_data', 'group']).subject.count().unstack('group').reset_index(),
+                      headers='keys', tablefmt='psql'))
+        
         self.df = subjects_df
 
 if __name__ == "__main__":
     data_loc = '/Volumes/CCNC_4T/psyscan/data'
     psyscan_study = psyscanStudy(data_loc)
     all_subject_with_DTI_and_FS_locs = psyscan_study.df.groupby('both_data').get_group(True).subject_loc
-    len(all_subject_with_DTI_and_FS_locs)
     #os.environ['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS']='1'
 
     #def tmp_func(x):
@@ -1419,15 +1422,15 @@ if __name__ == "__main__":
         #results = pool.map(tmp_func, all_subject_with_DTI_and_FS_locs)
 
 
-    dti_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/DTI.nii.gz'
-    dti_img = nb.load(dti_loc)
-    dti_data = dti_img.get_data()
+    #dti_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/DTI.nii.gz'
+    #dti_img = nb.load(dti_loc)
+    #dti_data = dti_img.get_data()
 
-    plot_4d_pdf(dti_loc, '/home/kangik/prac.pdf')
+    #plot_4d_pdf(dti_loc, '/home/kangik/prac.pdf')
 
 
-    dti_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/nodif.nii.gz'
-    dti_brain_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/nodif_brain.nii.gz'
+    #dti_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/nodif.nii.gz'
+    #dti_brain_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/nodif_brain.nii.gz'
     #plot_3d_pdf(dti_loc, '/home/kangik/prac.pdf')
 
     #plot_two_3d_pdf(dti_loc, dti_brain_loc, '/home/kangik/prac.pdf')
