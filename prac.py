@@ -1005,6 +1005,7 @@ class antsSynSettings(dtiSettings, fsSettings):
         os.popen(command).read()
         
     def ants_unwarping(self):
+
 #         -r [{c3d_conv_b0_to_t1_mat},1] \
 # antsRegistration -d 3 -r ../../data/PSYF05004/registration/b0_to_t1_vtk.txt -m CC[../../data/PSYF05004/FREESURFER/mri/brain_recip.nii.gz,../../data/PSYF05004/DTI/nodif.nii.gz,1,4] -c [100x70x20,1e-7,5] -t SyN[0.1,3,0] -f 4x2x1 -s 2x1x0vox -g 0.1x1.0x0.1 -u 1 -z 1 --winsorize-image-intensities [0.005, 0.995] -v -o ../../data/PSYF05004/registration/ants
 #         reg = Registration()
