@@ -115,7 +115,7 @@ def plot_3d_dwi_pdf(img_loc, outname, ncols=15):
                  fontsize=14, 
                  fontweight='bold')
 
-    slice_num = 5
+    slice_num = 0
     for slice_num, ax in enumerate(np.ravel(axes)): # for each axes
         img = ax.imshow(img_data[:,:,slice_num], vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
         ax.set_axis_off()
