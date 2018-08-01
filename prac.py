@@ -36,6 +36,7 @@ from ipywidgets import *
 #get_ipython().run_line_magic('matplotlib', 'notebook') # Jupyter notebook
 
 
+
 def plot_4d_dwi_pdf(img_loc, outname, z_gap=3, ncols=15, page_num=7):
     '''
     Plot 4d dwi data. Save as PDF.
@@ -122,6 +123,66 @@ def plot_3d_dwi_pdf(img_loc, outname, ncols=6, nrows=4):
             print(slice_num)
             try:
                 img = ax.imshow(img_data[:,:,slice_num], cmap='gray', vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
+                ax.text(0.5, 0.1, 
+                     slice_num+1,
+                     verticalalignment='bottom', horizontalalignment='center',
+                     #rotation=90, 
+                     transform=ax.transAxes,
+                     fontsize=10, color='white')
+                ax.set_axis_off()
+            except:
+                #pass
+                img = ax.imshow(np.zeros_like(img_data)[:,:,0], cmap='gray')#, vmin=vmin, vmax=vmax)
+                ax.set_axis_off()
+
+        plt.subplots_adjust(wspace=0, hspace=0)
+        pdf.savefig(fig)  # saves the current figure into a pdf page
+        plt.close()
+        slice_num_s = slice_num+1
+
+    pdf.close()
+    print('PDF saved at {}'.format(outname))
+
+def plot_two_3d_pdf(img_loc1, img_log2, outname, ncols=6, nrows=4):
+    '''
+    Plot two 3d maps. Save as PDF.
+    - vmin / vmax percentile
+    '''
+    print('Summary pdf of {}'.format(img_loc))
+
+    img_data1 = nb.load(img_loc1).get_data()
+    img_data2 = nb.load(img_loc2).get_data()
+
+    img_data1 = np.ma.masked_where(img_data1>0, img_data1)
+    img_data2 = np.ma.masked_where(img_data2>0, img_data2)
+
+    # Initialise fig and ax
+    # Columns : different z-slices
+    # Rows : differnt volumes of the dwi data
+    pdf = PdfPages(outname)
+    #nrows = math.ceil(img_data.shape[2] / ncols)
+    page_num = math.ceil(img_data.shape[2] / ncols / nrows)
+
+    # Match brightness of the diffusion weighted volumes
+    vmin = img_data1[img_data1!=0].min() # vmin and vmax estimation in the last volume
+    vmax = img_data1.max() # which is likely be non-b0 image
+
+    slice_num_s = 0
+    for page in range(0, page_num): # for each page
+        fig, axes = plt.subplots(ncols=ncols, 
+                                 nrows=nrows, 
+                                 figsize=(11.69, 8.27), 
+                                 dpi=300)
+
+        fig.suptitle('{}'.format(img_loc), 
+                     fontsize=14, 
+                     fontweight='bold')
+
+        for slice_num, ax in enumerate(np.ravel(axes), slice_num_s): # for each axes
+            print(slice_num)
+            try:
+                img1 = ax.imshow(img_data1[:,:,slice_num], cmap='gray', vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
+                img2 = ax.imshow(img_data2[:,:,slice_num], cmap='hot', alpha=0.5, vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
                 ax.text(0.5, 0.1, 
                      slice_num+1,
                      verticalalignment='bottom', horizontalalignment='center',
@@ -1343,7 +1404,6 @@ class psyscanStudy:
         #print(subjects_df[subjects_df.both_data].groupby('group').subject.count())
         #print(subjects_df.groupby(['group', 'both_data']).count())
 
-
 if __name__ == "__main__":
     #data_loc = '/Volumes/CCNC_4T/psyscan/data'
     #psyscan_study = psyscanStudy(data_loc)
@@ -1356,4 +1416,7 @@ if __name__ == "__main__":
 
 
     dti_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/nodif.nii.gz'
-    plot_3d_dwi_pdf(dti_loc, '/home/kangik/prac.pdf')
+    dti_brain_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/nodif_brain.nii.gz'
+    #plot_3d_dwi_pdf(dti_loc, '/home/kangik/prac.pdf')
+
+    plot_two_3d_pdf(dti_loc, dti_brain_loc, '/home/kangik/prac.pdf')
