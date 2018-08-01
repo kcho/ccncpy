@@ -1261,5 +1261,11 @@ class psyscanStudy:
 
 
 if __name__ == "__main__":
-    data_loc = '/Volumes/CCNC_4T/psyscan/data'
-    psyscan_study = psyscanStudy(data_loc)
+    #data_loc = '/Volumes/CCNC_4T/psyscan/data'
+    #psyscan_study = psyscanStudy(data_loc)
+
+    dti_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/DTI.nii.gz'
+    dti_img = nb.load(dti_loc)
+    dti_data = dti_img.get_data()
+
+    plot_4d_dwi_pdf(dti_data)
