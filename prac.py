@@ -30,6 +30,8 @@ import roiExtraction
 from matplotlib.widgets import Slider, Button, RadioButtons
 from matplotlib.backends.backend_pdf import PdfPages
 
+import math
+
 from ipywidgets import *
 #get_ipython().run_line_magic('matplotlib', 'notebook') # Jupyter notebook
 
@@ -39,15 +41,14 @@ def plot_4d_dwi_pdf(img_loc, outname, z_gap=3, ncols=15, page_num=7):
     Plot 4d dwi data. Save as PDF.
     - vmin / vmax percentile
     '''
+    print('Summary pdf of {}'.format(img_loc))
+    print('PDF saved at {}'.format(outname))
 
-    print('Summary print at : {}'.format(outname))
-    # Match brightness of the diffusion weighted volumes
     img_data = nb.load(img_loc).get_data()
+
+    # Match brightness of the diffusion weighted volumes
     vmin = img_data[:,:,:,-1].min() # vmin and vmax estimation in the last volume
     vmax = img_data[:,:,:,-1].max() # which is likely be non-b0 image
-
-    z_num = img_data.shape[3]
-    print(z_num)
 
     # Initialise fig and ax
     # Columns : different z-slices
@@ -55,22 +56,28 @@ def plot_4d_dwi_pdf(img_loc, outname, z_gap=3, ncols=15, page_num=7):
 
     vol_num_s = 0
     pdf = PdfPages(outname)
-    for page in range(0, page_num):
-        fig, axes = plt.subplots(ncols=ncols, nrows=int(z_num/page_num), figsize=(11.69, 8.27), dpi=200)
-        fig.suptitle('{}'.format(img_loc), fontsize=14, fontweight='bold')
+    nrows = math.ceil(img_data.shape[3] / page_num)
+    for page in range(0, page_num): # for each page
+        fig, axes = plt.subplots(ncols=ncols, 
+                                 nrows=nrows,
+                                 figsize=(11.69, 8.27), 
+                                 dpi=300)
 
-        for vol_num, row_axes in enumerate(axes, vol_num_s):
+        fig.suptitle('{}'.format(img_loc), 
+                     fontsize=14, 
+                     fontweight='bold')
 
+        for vol_num, row_axes in enumerate(axes, vol_num_s): # for each row
             slice_num = 5
-            for col_num, ax in enumerate(row_axes):
+            for col_num, ax in enumerate(row_axes): # for each column
                 img = ax.imshow(img_data[:,:,slice_num,vol_num], vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
                 ax.set_axis_off()
                 slice_num += z_gap
             row_axes[0].text(0, 0.5, 
-                            vol_num+1,
-                            verticalalignment='center', horizontalalignment='right',
-                            rotation=90, 
-                              transform=row_axes[0].transAxes,
+                             vol_num+1,
+                             verticalalignment='center', horizontalalignment='right',
+                             rotation=90, 
+                             transform=row_axes[0].transAxes,
                              fontsize=15)
 
         vol_num_s = vol_num+1
@@ -78,11 +85,53 @@ def plot_4d_dwi_pdf(img_loc, outname, z_gap=3, ncols=15, page_num=7):
         pdf.savefig(fig)  # saves the current figure into a pdf page
         plt.close()
     pdf.close()
-    # For each volumes
 
-    #fig.savefig(outname)
-    #plt.close()
+def plot_3d_dwi_pdf(img_loc, outname, ncols=15):
+    '''
+    Plot 3d dwi data. Save as PDF.
+    - vmin / vmax percentile
+    '''
+    print('Summary pdf of {}'.format(img_loc))
+    print('PDF saved at {}'.format(outname))
 
+    img_data = nb.load(img_loc).get_data()
+
+    # Match brightness of the diffusion weighted volumes
+    vmin = img_data[:,:,:].min() # vmin and vmax estimation in the last volume
+    vmax = img_data[:,:,:].max() # which is likely be non-b0 image
+
+    # Initialise fig and ax
+    # Columns : different z-slices
+    # Rows : differnt volumes of the dwi data
+
+    pdf = PdfPages(outname)
+    nrows = math.ceil(img_data.shape[2] / ncols)
+
+    fig, axes = plt.subplots(ncols=ncols, 
+                             nrows=nrows, 
+                             figsize=(11.69, 8.27), 
+                             dpi=300)
+
+    fig.suptitle('{}'.format(img_loc), 
+                 fontsize=14, 
+                 fontweight='bold')
+
+    slice_num = 5
+    for slice_num, ax in enumerate(np.ravel(axes): # for each axes
+        img = ax.imshow(img_data[:,:,slice_num], vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
+        ax.set_axis_off()
+        slice_num += z_gap
+        axes[slice_num].text(0.5, 0, 
+                             vol_num+1,
+                             verticalalignment='center', horizontalalignment='center',
+                             #rotation=90, 
+                             transform=row_axes[0].transAxes,
+                             fontsize=10)
+        slice_num+=1
+    plt.subplots_adjust(wspace=0, hspace=0)
+    pdf.savefig(fig)  # saves the current figure into a pdf page
+    plt.close()
+    pdf.close()
 
 def plot_4d_dwi(img_data:np.array):
     '''
@@ -1294,4 +1343,8 @@ if __name__ == "__main__":
     dti_img = nb.load(dti_loc)
     dti_data = dti_img.get_data()
 
-    plot_4d_dwi_pdf(dti_loc, '/home/kangik/prac.pdf')
+    #plot_4d_dwi_pdf(dti_loc, '/home/kangik/prac.pdf')
+
+
+    dti_loc = '/Volumes/CCNC_4T/psyscan/data/PSYC15002/DTI/nodif.nii.gz'
+    plot_3d_dwi_pdf(dti_loc, '/home/kangik/prac.pdf')
