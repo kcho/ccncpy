@@ -42,7 +42,6 @@ def plot_4d_dwi_pdf(img_loc, outname, z_gap=3, ncols=15, page_num=7):
     - vmin / vmax percentile
     '''
     print('Summary pdf of {}'.format(img_loc))
-    print('PDF saved at {}'.format(outname))
 
     img_data = nb.load(img_loc).get_data()
 
@@ -85,6 +84,7 @@ def plot_4d_dwi_pdf(img_loc, outname, z_gap=3, ncols=15, page_num=7):
         pdf.savefig(fig)  # saves the current figure into a pdf page
         plt.close()
     pdf.close()
+    print('PDF saved at {}'.format(outname))
 
 def plot_3d_dwi_pdf(img_loc, outname, ncols=15):
     '''
@@ -92,7 +92,6 @@ def plot_3d_dwi_pdf(img_loc, outname, ncols=15):
     - vmin / vmax percentile
     '''
     print('Summary pdf of {}'.format(img_loc))
-    print('PDF saved at {}'.format(outname))
 
     img_data = nb.load(img_loc).get_data()
 
@@ -117,21 +116,21 @@ def plot_3d_dwi_pdf(img_loc, outname, ncols=15):
                  fontweight='bold')
 
     slice_num = 5
-    for slice_num, ax in enumerate(np.ravel(axes): # for each axes
+    for slice_num, ax in enumerate(np.ravel(axes)): # for each axes
         img = ax.imshow(img_data[:,:,slice_num], vmin=vmin, vmax=vmax)#, aspect=img_data[0]/img_data[1])
         ax.set_axis_off()
-        slice_num += z_gap
-        axes[slice_num].text(0.5, 0, 
-                             vol_num+1,
-                             verticalalignment='center', horizontalalignment='center',
-                             #rotation=90, 
-                             transform=row_axes[0].transAxes,
-                             fontsize=10)
-        slice_num+=1
+        slice_num += 1
+        ax.text(0.5, 0, 
+             slice_num,
+             verticalalignment='center', horizontalalignment='center',
+             #rotation=90, 
+             transform=ax.transAxes,
+             fontsize=10)
     plt.subplots_adjust(wspace=0, hspace=0)
     pdf.savefig(fig)  # saves the current figure into a pdf page
     plt.close()
     pdf.close()
+    print('PDF saved at {}'.format(outname))
 
 def plot_4d_dwi(img_data:np.array):
     '''
