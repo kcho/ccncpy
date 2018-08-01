@@ -1389,7 +1389,6 @@ class psyscanStudy:
     def __init__(self, data_loc):
         self.data_loc = data_loc
         self.all_subject_locs = [join(data_loc, x) for x in os.listdir(data_loc) if x.startswith('PSY')]
-        #self.all_subject_with_DTI_and_FS_locs = [x for x in all_subject_locs if 'DTI' in os.listdir(x) and 'FREESURFER' in os.listdir(x)]
         
         subjects_df = pd.DataFrame({'subject_loc':self.all_subject_locs})
         subjects_df['subject_class'] = subjects_df.subject_loc.apply(psyscanSettings)
@@ -1400,17 +1399,20 @@ class psyscanStudy:
         subjects_df['fs_data'] = subjects_df.subject_loc.apply(lambda x: True if 'FREESURFER' in os.listdir(x) else False)
         subjects_df['dti_data'] = subjects_df.subject_loc.apply(lambda x: True if 'DTI' in os.listdir(x) else False)
         subjects_df['both_data'] = subjects_df.fs_data & subjects_df.dti_data
-        #for dti_img in ['
-        #print(subjects_df[subjects_df.both_data].groupby('group').subject.count())
-        #print(subjects_df.groupby(['group', 'both_data']).count())
-        print(tabulate(subjects_df.groupby(['fs_data', 'dti_data', 'group']).subject.count().unstack('group').reset_index(),
-                      headers='keys', tablefmt='psql'))
+
         
         self.df = subjects_df
+
+    #def dti_outputs(self):
+
+
 
 if __name__ == "__main__":
     data_loc = '/Volumes/CCNC_4T/psyscan/data'
     psyscan_study = psyscanStudy(data_loc)
+    count_df = psyscan_study.df.groupby(['fs_data', 'dti_data', 'group']).subject.count().unstack('group')
+    count_df['sum'] = count_df.sum(axis=1, skipna=True)
+    print(tabulate(count_df.reset_index(), headers='keys', tablefmt='psql'))
     all_subject_with_DTI_and_FS_locs = psyscan_study.df.groupby('both_data').get_group(True).subject_loc
     #os.environ['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS']='1'
 
